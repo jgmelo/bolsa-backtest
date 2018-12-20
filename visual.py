@@ -1,0 +1,135 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Fri Nov 30 13:45:30 2018
+
+@author: usuario
+"""
+
+import matplotlib.pyplot as plt
+import matplotlib.finance as fin
+import matplotlib.dates as dts
+import datetime as dtm
+import numpy as np
+
+#TAMANHO_FIG_X = 15
+#TAMANHO_FIG_Y = 8
+
+TAMANHO_FIG_X = 30
+TAMANHO_FIG_Y = 16
+
+INDICE_K = 0
+INDICE_H = 2
+INDICE_L = 3
+    
+class Visualiza(object):
+    
+    # Padrão de uso da classe:
+    # 1. Inicializa-se um objeto Visualiza;
+    # 2. Chama-se o método categoriza_por_data (Toma valores D-OHLC como
+    #    argumento). Motivo: plotagem de mais de
+    #    um dia não fica boa no gráfico ainda (gaps grandes entre os dias).
+    # 3. Chama-se o método plota para plotar os dados cateogorizados no passo
+    #    anterior.
+    
+    def categoriza_por_data(self,lista_fonte):
+        
+        # Retorna dicionário com chaves == datas (dias) e valores == lista
+        # de listas para entrada de candlestick_ohlc.
+        self.d_categoria_diaria = dict()
+        
+        # Cada valor do dicionário self.d_categoria_diaria
+        # é uma lista de listas. As listas do
+        # nível herárquico mais baixo são os elementos de lista_fonte.
+        # Portanto, agora, esses elementos estão separados por data.
+        for elem in lista_fonte:
+        
+            # Toma o elemento correspondente a data, que é uma string,
+            # e mantém somente YYYY.MM.DD ([:10]).
+            self.chave_data = elem[INDICE_K][:10]
+            
+            try:
+                # Se a chave existe, inclui o elemento corrente no fim da
+                # lista que corresponde ao valor associado.
+                self.d_categoria_diaria[self.chave_data].append(elem)
+            except KeyError:
+                # Se a chave não existir, cria-a e seta o valor como uma lista
+                # contendo somente o elemento corrente.
+                self.d_categoria_diaria[self.chave_data] = [elem]
+                
+        return self.d_categoria_diaria
+    
+    def plota(self, dados, dados_annot, indic01 = False, indic02 = False):
+        
+        self.fig = plt.figure(figsize=(TAMANHO_FIG_X,TAMANHO_FIG_Y))
+        self.ax = self.fig.add_subplot(111)
+        
+        # Cria lista somente com os dados da data data_string
+        self.dados = dados
+        
+        # Converte datas de string para datetime e depois para float.
+        self.coluna_data_string = [x[INDICE_K] for x in self.dados]
+        self.coluna_data_float = self.converte_data_em_float(self.coluna_data_string)
+        
+        # Cria lista argumento de entrada para a função candlestick_ohlc.
+        self.entrada_ohlc = []
+        for elem_data, elem_dados in zip(self.coluna_data_float, self.dados):
+            self.aux = [elem_data]
+            self.aux.extend(elem_dados[1:5])
+            self.entrada_ohlc.append(self.aux)
+#        self.entrada_ohlc = list(map(lambda y,z: [y].append(z), self.coluna_data_float, self.dados))
+        
+        fin.candlestick_ohlc(self.ax, self.entrada_ohlc, width=0.002, colorup=(0,1,0.2))
+        
+        # Instrui Matplotlib a definir automaticamente os xticks e
+        # define a formatação desses xticks.
+        self.ax.xaxis.set_major_locator(dts.AutoDateLocator())
+        self.ax.xaxis.set_major_formatter(dts.DateFormatter('%H:%M'))
+        
+        if indic01 == True:
+            self.coluna_medias_H = list(map(lambda x: x[-1], self.dados))
+            self.ax.plot(self.coluna_data_float, self.coluna_medias_H)
+            
+        if indic02 == True:
+            self.coluna_medias_L = list(map(lambda x: x[-2], self.dados))
+            self.ax.plot(self.coluna_data_float, self.coluna_medias_L)
+
+        # *************************************
+        # ***** Inclusão das annotations. *****
+        # *************************************
+        
+        self.y_max = self.ax.get_ybound()[1]
+        self.y_min = self.ax.get_ybound()[0]
+        # Calcula y médio do gráfico.
+        self.y_medio = self.y_min + (self.y_max - self.y_min) / 2
+        
+        # A posição do texto de annotation é definida de forma crescente,
+        # para melhor visualização. Por isso, faz-se um linspace abaixo, 
+        # para que os textos sigam a diagonal do gráfico.
+        for texto, data_hora, y_annotation, y_texto in \
+        zip(dados_annot['texto'],\
+            self.converte_data_em_float(dados_annot['datahora']),\
+            dados_annot['y_annot'],\
+            np.linspace(self.y_min, self.y_max, len(dados_annot['texto']))):
+            
+            self.ax.annotate(texto,\
+                             xy = (data_hora, y_annotation),\
+                             xytext = (data_hora, y_texto),\
+                             arrowprops = dict(arrowstyle="->", connectionstyle="arc3"))
+
+        plt.show()
+        
+    def converte_data_em_float(self, l_data_string):
+        
+        # Método para fazer a conversão de data para float, de forma a ser
+        # aceita por candlestick_ohlc.
+        
+        self.l_data_float = \
+        [dts.date2num(dtm.datetime(\
+                                   int(x[:4]),\
+                                   int(x[5:7]),\
+                                   int(x[8:10]),\
+                                   int(x[11:13]),\
+                                   int(x[14:16]))) for x in l_data_string]            
+
+        return self.l_data_float
+        
