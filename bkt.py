@@ -4,7 +4,6 @@ Created on Wed Nov 21 12:04:10 2018
 
 @author: usuario
 """
-# Cabecalho teste branch
 import datetime as dtm
 
 HILO_PERIODOS = 12
@@ -18,6 +17,8 @@ INDICE_D = 7
 INDICE_TH = 8
 INDICE_MH = 9
 INDICE_ML = 10
+INDICE_MO = 11
+INDICE_MC = 12
 
 # Fator que multiplicará o stop loss para definir o take profit.
 #> Implementar o fornecimento desse fator como argumento.
@@ -25,8 +26,8 @@ FATOR_LUCRO = 2
 
 # Número de barras a ser tolerado antes de cancelar o setup Single Bar.
 TOLERANCIA_POS_SBAR = 2
-# Sequência de lista_fonte: [K O H L C TV V D TH MH ML ]
-#                           [0 1 2 3 4 5  6 7 8 9 10 ]
+# Sequência de lista_fonte: [K O H L C TV V D TH MH ML MO MC]
+#                           [0 1 2 3 4 5  6 7 8  9  10 11 12]
 
 # Padrão de uso da classe:
 # 1. Inicializa objeto BackTest();
@@ -73,50 +74,72 @@ class BackTest(object):
         
     def media(self):
         
+        self.lista_O = []
         self.lista_H_hilo = []
         self.lista_L_hilo = []
+        self.lista_C = []
         
-        # Monta duas listas (inicializadas acima), 
-        # uma com máximas e outra com mínimas. Data/hora estão mantidas como
-        # chave de cada valor.
+        # Monta quatro listas (inicializadas acima), com OHLC para cálculo das
+        # MMs referentes a cada uma dessas categorias de preço.
+        # Data/hora estão mantidas como chave de cada valor.
+        
         for self.elem in self.lista_fonte:
+            self.lista_O.append([self.elem[INDICE_O], self.elem[INDICE_K]])
             self.lista_H_hilo.append([self.elem[INDICE_H], self.elem[INDICE_K]])
             self.lista_L_hilo.append([self.elem[INDICE_L], self.elem[INDICE_K]])
+            self.lista_C.append([self.elem[INDICE_C], self.elem[INDICE_K]])
             
+        self.lista_medias_O = []
         self.lista_medias_H_hilo = []
         self.lista_medias_L_hilo = []
+        self.lista_medias_C = []
         
         # Inicia a criação das listas das médias móveis das máximas e mínimas
         # (inicializadas acima). Até HILO_PERIODOS-1, não dá pra calcular a MM.
+        while len(self.lista_medias_O) < HILO_PERIODOS:
+            self.lista_medias_O.append((self.lista_O[0][0] + self.lista_C[0][0])/2)
         while len(self.lista_medias_H_hilo) < HILO_PERIODOS:
-            self.lista_medias_H_hilo.append(3610.0)    
+            self.lista_medias_H_hilo.append((self.lista_O[0][0] + self.lista_C[0][0])/2)    
         while len(self.lista_medias_L_hilo) < HILO_PERIODOS:
-            self.lista_medias_L_hilo.append(3605.0)
+            self.lista_medias_L_hilo.append((self.lista_O[0][0] + self.lista_C[0][0])/2)
+        while len(self.lista_medias_C) < HILO_PERIODOS:
+            self.lista_medias_C.append((self.lista_O[0][0] + self.lista_C[0][0])/2)
         
         # Ao invés de incrementar o índice (precisaria de um for baseado em
         # índice), as listas auxiliares têm seu primeiro elemento removido a
         # cada iteração, o que permite que sempre se pegue uma janela de tamanho
-        # HILO_PERIODOS o primeiro elemento dessas listas em cada iteração, 
+        # HILO_PERIODOS dessas listas em cada iteração, 
         # mantendo assim o efeito de incremento de posição.
         
         # Unica diferença das listas auxiliares é que não tem a chave.
-        # São listas de números puros (H/L).
+        # São listas de números puros (OHLC).
+        self.lista_O_aux = list(map(lambda ls: ls[0], self.lista_O))
         self.lista_H_hilo_aux = list(map(lambda ls: ls[0], self.lista_H_hilo))
         self.lista_L_hilo_aux = list(map(lambda ls: ls[0], self.lista_L_hilo))
+        self.lista_C_aux = list(map(lambda ls: ls[0], self.lista_C))
     
+        while len(self.lista_O_aux) > HILO_PERIODOS:
+            self.lista_medias_O.append(sum(self.lista_O_aux[:HILO_PERIODOS]) / HILO_PERIODOS)
+            self.lista_O_aux = self.lista_O_aux[1:]
         while len(self.lista_H_hilo_aux) > HILO_PERIODOS:
             self.lista_medias_H_hilo.append(sum(self.lista_H_hilo_aux[:HILO_PERIODOS]) / HILO_PERIODOS)
             self.lista_H_hilo_aux = self.lista_H_hilo_aux[1:]
         while len(self.lista_L_hilo_aux) > HILO_PERIODOS:
             self.lista_medias_L_hilo.append(sum(self.lista_L_hilo_aux[:HILO_PERIODOS]) / HILO_PERIODOS)
             self.lista_L_hilo_aux = self.lista_L_hilo_aux[1:]
+        while len(self.lista_C_aux) > HILO_PERIODOS:
+            self.lista_medias_C.append(sum(self.lista_C_aux[:HILO_PERIODOS]) / HILO_PERIODOS)
+            self.lista_C_aux = self.lista_C_aux[1:]
             
-        # Neste ponto, temos médias móveis de H e L nas posições
-        # correspondentes a cada elemtno (lista de dados) de self.lista_fonte.
+        # Neste ponto, temos médias móveis de OHLC nas posições
+        # correspondentes a cada elemento (lista de dados) de self.lista_fonte.
         # Basta, então, fazer append de cada elemento de lista_medias_X_hilo no
         # elemento correspondente de self.lista_fonte.
+        
         list(map(lambda l_orig, l_medias: l_orig.append(l_medias),self.lista_fonte, self.lista_medias_H_hilo))
         list(map(lambda l_orig, l_medias: l_orig.append(l_medias),self.lista_fonte, self.lista_medias_L_hilo))
+        list(map(lambda l_orig, l_medias: l_orig.append(l_medias),self.lista_fonte, self.lista_medias_O))
+        list(map(lambda l_orig, l_medias: l_orig.append(l_medias),self.lista_fonte, self.lista_medias_C))
         
         return self.lista_fonte
 
@@ -524,9 +547,27 @@ class BackTest(object):
         self.flag_sbar_compra = False
         self.flag_sbar_venda = False
         self.d_params_annotation = {'texto':[], 'y_annot':[], 'ytext_annot':[], 'datahora':[]}
+        self.d_ultima_media = {'MO':[], 'MH':[], 'ML':[], 'MC':[]}
 
         for vela in lista_fonte_periodo:
             
+            self.d_ultima_media['MO'].append(vela[INDICE_MO])
+            if len(self.d_ultima_media['MO']) > 2:
+                self.d_ultima_media['MO'] = self.d_ultima_media['MO'][1:]
+            
+            self.d_ultima_media['MH'].append(vela[INDICE_MH])
+            if len(self.d_ultima_media['MH']) > 2:
+                self.d_ultima_media['MH'] = self.d_ultima_media['MH'][1:]
+                
+            self.d_ultima_media['ML'].append(vela[INDICE_ML])
+            if len(self.d_ultima_media['ML']) > 2:
+                self.d_ultima_media['ML'] = self.d_ultima_media['ML'][1:]
+                
+            self.d_ultima_media['MC'].append(vela[INDICE_MC])
+            if len(self.d_ultima_media['MC']) > 2:
+                self.d_ultima_media['MC'] = self.d_ultima_media['MC'][1:]
+                
+                
         #***********************************************
         #***** Código para atualizar fifo de velas *****
         #***********************************************
@@ -561,7 +602,10 @@ class BackTest(object):
                 else:
                     # Volta a fifo para 4 velas de tamanho.
                     self.fifo_velas = self.fifo_velas[1:]
-                
+            
+
+
+
         #******************************************************
         #***** Fim do código para atualizar fifo de velas *****
         #******************************************************
@@ -604,12 +648,15 @@ class BackTest(object):
             #**************************************************
             
             #*******************************************
-            #***** Código para entrar na operação *****
+            #***** Código para entrar na operação ******
             #*******************************************
             
             for elem in vela[INDICE_O : INDICE_C+1]:
                 
-                if (elem >= self.gatilho_entrada) and self.flag_sbar_compra and not(self.flag_entrou):
+                if (elem >= self.gatilho_entrada) and\
+                self.flag_sbar_compra and\
+                not(self.flag_entrou) and\
+                (self.d_ultima_media['MC'][1] > self.d_ultima_media['MC'][0]):
                     
                     self.flag_entrou = True
                     
@@ -650,7 +697,10 @@ class BackTest(object):
                     
                     break
                         
-                elif (elem <= self.gatilho_entrada) and self.flag_sbar_venda and not(self.flag_entrou):
+                elif (elem <= self.gatilho_entrada) and\
+                self.flag_sbar_venda and\
+                not(self.flag_entrou) and\
+                (self.d_ultima_media['MC'][1] < self.d_ultima_media['MC'][0]):
                     
                     self.flag_entrou = True
                     

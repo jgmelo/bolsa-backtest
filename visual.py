@@ -11,15 +11,23 @@ import matplotlib.dates as dts
 import datetime as dtm
 import numpy as np
 
-#TAMANHO_FIG_X = 15
-#TAMANHO_FIG_Y = 8
+TAMANHO_FIG_X = 15
+TAMANHO_FIG_Y = 8
 
-TAMANHO_FIG_X = 30
-TAMANHO_FIG_Y = 16
+#TAMANHO_FIG_X = 30
+#TAMANHO_FIG_Y = 16
 
 INDICE_K = 0
+INDICE_O = 1
 INDICE_H = 2
 INDICE_L = 3
+INDICE_C = 4
+INDICE_D = 7
+INDICE_TH = 8
+INDICE_MH = 9
+INDICE_ML = 10
+INDICE_MO = 11
+INDICE_MC = 12
     
 class Visualiza(object):
     
@@ -86,12 +94,12 @@ class Visualiza(object):
         self.ax.xaxis.set_major_formatter(dts.DateFormatter('%H:%M'))
         
         if indic01 == True:
-            self.coluna_medias_H = list(map(lambda x: x[-1], self.dados))
-            self.ax.plot(self.coluna_data_float, self.coluna_medias_H)
+            self.coluna_medias_aux = list(map(lambda x: x[INDICE_MC], self.dados))
+            self.ax.plot(self.coluna_data_float, self.coluna_medias_aux)
             
         if indic02 == True:
-            self.coluna_medias_L = list(map(lambda x: x[-2], self.dados))
-            self.ax.plot(self.coluna_data_float, self.coluna_medias_L)
+            self.coluna_medias_aux = list(map(lambda x: x[INDICE_ML], self.dados))
+            self.ax.plot(self.coluna_data_float, self.coluna_medias_aux)
 
         # *************************************
         # ***** Inclusão das annotations. *****
