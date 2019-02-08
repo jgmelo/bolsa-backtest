@@ -5,6 +5,7 @@ Created on Fri Nov 30 13:45:30 2018
 @author: usuario
 """
 
+import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.finance as fin
 import matplotlib.dates as dts
@@ -22,6 +23,7 @@ INDICE_O = 1
 INDICE_H = 2
 INDICE_L = 3
 INDICE_C = 4
+INDICE_V = 6
 INDICE_D = 7
 INDICE_TH = 8
 INDICE_MH = 9
@@ -86,6 +88,15 @@ class Visualiza(object):
             self.entrada_ohlc.append(self.aux)
 #        self.entrada_ohlc = list(map(lambda y,z: [y].append(z), self.coluna_data_float, self.dados))
         
+        # Cria lista argumento de entrada para a plotagem do volume.
+        self.entrada_volume = []
+        for elem_data, elem_dados in zip(self.coluna_data_float, self.dados):
+            self.aux = [elem_data]
+            self.aux.append(elem_dados[INDICE_O])
+            self.aux.append(elem_dados[INDICE_C])
+            self.aux.append(elem_dados[INDICE_V])
+            self.entrada_volume.append(self.aux)
+            
         fin.candlestick_ohlc(self.ax, self.entrada_ohlc, width=0.002, colorup=(0,1,0.2))
         
         # Instrui Matplotlib a definir automaticamente os xticks e
@@ -94,13 +105,32 @@ class Visualiza(object):
         self.ax.xaxis.set_major_formatter(dts.DateFormatter('%H:%M'))
         
         if indic01 == True:
-            self.coluna_medias_aux = list(map(lambda x: x[INDICE_MC], self.dados))
+            self.coluna_medias_aux = list(map(lambda x: x[INDICE_MH], self.dados))
             self.ax.plot(self.coluna_data_float, self.coluna_medias_aux)
             
         if indic02 == True:
             self.coluna_medias_aux = list(map(lambda x: x[INDICE_ML], self.dados))
             self.ax.plot(self.coluna_data_float, self.coluna_medias_aux)
 
+        # *************************************
+        # ***** Plotagem do volume. ***********
+        # *************************************
+        
+        # Cria eixo secundário.
+        self.ax_secundario = self.ax.twinx()
+        
+        self.vol_verde = list(filter(lambda s: s[2] >= s[1], self.entrada_volume))
+        self.vol_verde_x = list(map(lambda x: x[0], self.vol_verde))
+        self.vol_verde_y = list(map(lambda x: x[3], self.vol_verde))
+        
+        self.vol_vermelho = list(filter(lambda s: s[2] < s[1], self.entrada_volume))
+        self.vol_vermelho_x = list(map(lambda x: x[0], self.vol_vermelho))
+        self.vol_vermelho_y = list(map(lambda x: x[3], self.vol_vermelho))
+        
+        self.ax_secundario.bar(self.vol_verde_x, self.vol_verde_y, width=0.0025, color='g')
+        self.ax_secundario.bar(self.vol_vermelho_x, self.vol_vermelho_y, width=0.0025, color='r')
+        self.ax_secundario.set_position(matplotlib.transforms.Bbox([[0.125,-0.2],[0.9,0.09]]))
+        
         # *************************************
         # ***** Inclusão das annotations. *****
         # *************************************

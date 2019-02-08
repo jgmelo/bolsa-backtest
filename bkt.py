@@ -6,7 +6,7 @@ Created on Wed Nov 21 12:04:10 2018
 """
 import datetime as dtm
 
-HILO_PERIODOS = 12
+HILO_PERIODOS = 9
 
 INDICE_K = 0
 INDICE_O = 1
@@ -22,7 +22,7 @@ INDICE_MC = 12
 
 # Fator que multiplicará o stop loss para definir o take profit.
 #> Implementar o fornecimento desse fator como argumento.
-FATOR_LUCRO = 2
+FATOR_LUCRO = 0.7
 
 # Número de barras a ser tolerado antes de cancelar o setup Single Bar.
 TOLERANCIA_POS_SBAR = 2
@@ -675,8 +675,8 @@ class BackTest(object):
                         self.aporte = 10*self.aporte_aux if self.aporte_aux < 10 else 100
                         self.saldo -= 10*self.aporte_aux if self.aporte_aux < 10 else 100
                         
-                    self.aux_take_profit = vela[INDICE_C] - self.stop_loss
-                    self.take_profit = vela[INDICE_C] + FATOR_LUCRO * self.aux_take_profit
+                    self.aux_take_profit = self.gatilho_entrada - self.stop_loss
+                    self.take_profit = self.gatilho_entrada + FATOR_LUCRO * self.aux_take_profit
                     
                     self.d_params_annotation['texto'].append('E C')
                     self.d_params_annotation['y_annot'].append(elem)
