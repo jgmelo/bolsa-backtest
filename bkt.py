@@ -22,7 +22,7 @@ INDICE_MC = 12
 
 # Fator que multiplicará o stop loss para definir o take profit.
 #> Implementar o fornecimento desse fator como argumento.
-FATOR_LUCRO = 0.7
+FATOR_LUCRO = 0.85
 
 # Número de barras a ser tolerado antes de cancelar o setup Single Bar.
 TOLERANCIA_POS_SBAR = 2
@@ -342,7 +342,7 @@ class BackTest(object):
                         # Lucro é preço corrente (elem) menos o preço de
                         # fechamento do candle que disparou a entrada na
                         # operação.
-                        self.saldo += self.aporte + elem - self.ohlc_aux[INDICE_C]
+                        self.saldo += self.aporte + (elem - self.ohlc_aux[INDICE_C])*10
                         
                         # Reseta variáveis e flags
                         self.ohlc_aux = []
@@ -577,6 +577,9 @@ class BackTest(object):
                  self.fifo_velas.append('g')
                  # Passa as 3 primeiras velas sem operar.
                  if len(self.fifo_velas) <= 4:
+                     # Atualiza fechamento da útlima vela aqui, pois
+                     # não vai alcançar a atribuição no final do for.
+                     self.C_ultima_vela = vela[INDICE_C]
                      continue
                  else:
                      # Volta a fifo para 4 velas de tamanho.
@@ -587,6 +590,9 @@ class BackTest(object):
                 self.fifo_velas.append('r')
                 # Passa as 3 primeiras velas sem operar.
                 if len(self.fifo_velas) <= 4:
+                     # Atualiza fechamento da útlima vela aqui, pois
+                     # não vai alcançar a atribuição no final do for.
+                     self.C_ultima_vela = vela[INDICE_C]
                      continue
                 else:
                      # Volta a fifo para 4 velas de tamanho.
@@ -598,6 +604,9 @@ class BackTest(object):
                 self.fifo_velas.append(self.fifo_velas[-1])
                 # Passa as 3 primeiras velas sem operar.
                 if len(self.fifo_velas) <= 4:
+                     # Atualiza fechamento da útlima vela aqui, pois
+                     # não vai alcançar a atribuição no final do for.
+                     self.C_ultima_vela = vela[INDICE_C]
                      continue
                 else:
                     # Volta a fifo para 4 velas de tamanho.
@@ -625,6 +634,9 @@ class BackTest(object):
                     # Vai para a próxima vela.
                     self.gatilho_entrada = self.C_ultima_vela
                     self.flag_sbar_compra = True
+                    # Atualiza fechamento da útlima vela aqui, pois
+                    # não vai alcançar a atribuição no final do for.
+                    self.C_ultima_vela = vela[INDICE_C]
                     continue
                     
             elif vela[INDICE_C] > vela[INDICE_O] and not(self.flag_sbar_compra or self.flag_sbar_venda):
@@ -638,6 +650,9 @@ class BackTest(object):
                     # Vai para a próxima vela.
                     self.gatilho_entrada = self.C_ultima_vela
                     self.flag_sbar_venda = True
+                    # Atualiza fechamento da útlima vela aqui, pois
+                    # não vai alcançar a atribuição no final do for.
+                    self.C_ultima_vela = vela[INDICE_C]
                     continue
                     
                 # Se nenhuma das condições ocorrer, pelo próprio fluxo do programa
@@ -757,6 +772,9 @@ class BackTest(object):
                     self.tol_pos_sbar = 0
                     self.flag_sbar_compra = False
                     self.flag_sbar_venda = False
+                    # Atualiza fechamento da útlima vela aqui, pois
+                    # não vai alcançar a atribuição no final do for.
+                    self.C_ultima_vela = vela[INDICE_C]
                     continue
                 
             #**************************************************
@@ -779,7 +797,7 @@ class BackTest(object):
                     
                     if self.flag_sbar_compra and (elem > self.take_profit):
 
-                        self.saldo += self.aporte + elem - self.gatilho_entrada
+                        self.saldo += self.aporte + (elem - self.gatilho_entrada)*10
                         self.ohlc_aux = []
                         self.flag_entrou = False
                         self.flag_sbar_compra = False
@@ -826,7 +844,7 @@ class BackTest(object):
                     
                     elif self.flag_sbar_venda and (elem < self.take_profit):
 
-                        self.saldo += self.aporte + self.gatilho_entrada - elem
+                        self.saldo += self.aporte + (self.gatilho_entrada - elem)*10
                         self.ohlc_aux = []
                         self.flag_entrou = False # Indica saída do trade.
                         self.flag_sbar_venda = False
