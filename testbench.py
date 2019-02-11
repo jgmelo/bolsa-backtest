@@ -25,4 +25,4 @@ separado = hilo04_vis.categoriza_por_data(hilo04.get_lista_fonte())
 # Cria dicionario de annotations
 #dic_ann = hilo04.estr_hilo(separado[DATA_ANALISE])
 dic_ann = hilo04.single_bar(separado[DATA_ANALISE])
-hilo04_vis.plota(separado[DATA_ANALISE], dic_ann, indic01 = True, indic02 = True)
+hilo04_vis.plota(separado[DATA_ANALISE], dic_ann, plota_MH = True, plota_ML = True, plota_MC = True)

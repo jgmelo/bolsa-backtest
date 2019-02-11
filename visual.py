@@ -68,7 +68,11 @@ class Visualiza(object):
                 
         return self.d_categoria_diaria
     
-    def plota(self, dados, dados_annot, indic01 = False, indic02 = False):
+    def plota(self, dados, dados_annot, 
+              plota_MH = False, 
+              plota_ML = False,
+              plota_MO = False,
+              plota_MC = False):
         
         self.fig = plt.figure(figsize=(TAMANHO_FIG_X,TAMANHO_FIG_Y))
         self.ax = self.fig.add_subplot(111)
@@ -96,7 +100,11 @@ class Visualiza(object):
             self.aux.append(elem_dados[INDICE_C])
             self.aux.append(elem_dados[INDICE_V])
             self.entrada_volume.append(self.aux)
-            
+        
+        # *************************************
+        # ***** Plotagem do candlestick *******
+        # *************************************
+        
         fin.candlestick_ohlc(self.ax, self.entrada_ohlc, width=0.002, colorup=(0,1,0.2))
         
         # Instrui Matplotlib a definir automaticamente os xticks e
@@ -104,13 +112,25 @@ class Visualiza(object):
         self.ax.xaxis.set_major_locator(dts.AutoDateLocator())
         self.ax.xaxis.set_major_formatter(dts.DateFormatter('%H:%M'))
         
-        if indic01 == True:
+        # *************************************
+        # ***** Plotagem das MMs **************
+        # *************************************
+
+        if plota_MH == True:
             self.coluna_medias_aux = list(map(lambda x: x[INDICE_MH], self.dados))
-            self.ax.plot(self.coluna_data_float, self.coluna_medias_aux)
+            self.ax.plot(self.coluna_data_float, self.coluna_medias_aux, color='b')
             
-        if indic02 == True:
+        if plota_ML == True:
             self.coluna_medias_aux = list(map(lambda x: x[INDICE_ML], self.dados))
-            self.ax.plot(self.coluna_data_float, self.coluna_medias_aux)
+            self.ax.plot(self.coluna_data_float, self.coluna_medias_aux, color='b')
+        
+        if plota_MO == True:
+            self.coluna_medias_aux = list(map(lambda x: x[INDICE_MO], self.dados))
+            self.ax.plot(self.coluna_data_float, self.coluna_medias_aux, color='b')
+            
+        if plota_MC == True:
+            self.coluna_medias_aux = list(map(lambda x: x[INDICE_MC], self.dados))
+            self.ax.plot(self.coluna_data_float, self.coluna_medias_aux, color='k')
 
         # *************************************
         # ***** Plotagem do volume. ***********
