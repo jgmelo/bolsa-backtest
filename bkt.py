@@ -19,6 +19,8 @@ INDICE_MH = 9
 INDICE_ML = 10
 INDICE_MO = 11
 INDICE_MC = 12
+INDICE_SH = 13
+INDICE_SL = 14
 
 # Fator que multiplicará o stop loss para definir o take profit.
 #> Implementar o fornecimento desse fator como argumento.
@@ -26,8 +28,12 @@ FATOR_LUCRO = 0.85
 
 # Número de barras a ser tolerado antes de cancelar o setup Single Bar.
 TOLERANCIA_POS_SBAR = 2
-# Sequência de lista_fonte: [K O H L C TV V D TH MH ML MO MC]
-#                           [0 1 2 3 4 5  6 7 8  9  10 11 12]
+# Sequência de lista_fonte: [K O H L C TV V D TH MH ML MO MC SH SL]
+#                           [0 1 2 3 4 5  6 7 8  9  10 11 12 13 14]
+
+# Fator que multiplicará o módulo da diferença entre MC e MH e ML
+# para definir o stop loss com offset a partir de MH/ML.
+FATOR_STOP_MM = 0.8
 
 # Padrão de uso da classe:
 # 1. Inicializa objeto BackTest();
@@ -141,6 +147,14 @@ class BackTest(object):
         list(map(lambda l_orig, l_medias: l_orig.append(l_medias),self.lista_fonte, self.lista_medias_O))
         list(map(lambda l_orig, l_medias: l_orig.append(l_medias),self.lista_fonte, self.lista_medias_C))
         
+        # Acrescenta ao final de cada elemento de self.lista_fonte as MMs H e L
+        # com offset, para ajuste de stop.
+        for elem in self.lista_fonte:
+            self.offset_MH = (elem[INDICE_MH] - elem[INDICE_MC]) * FATOR_STOP_MM
+            self.offset_ML = (elem[INDICE_MC] - elem[INDICE_ML]) * FATOR_STOP_MM
+            elem.append(elem[INDICE_MH] + self.offset_MH)
+            elem.append(elem[INDICE_ML] - self.offset_ML)
+            
         return self.lista_fonte
 
     def get_lista_fonte(self):
@@ -761,7 +775,7 @@ class BackTest(object):
             #*************************************************
             
             #******************************************
-            #***** Código para canclear o setup *******
+            #***** Código para cancelar o setup *******
             #******************************************
             
             if not(self.flag_entrou) and (self.flag_sbar_compra or self.flag_sbar_venda):
@@ -789,9 +803,9 @@ class BackTest(object):
                 
                 # Atualiza o stop loss.
                 if self.flag_sbar_compra:
-                    self.stop_loss = vela[INDICE_ML] 
+                    self.stop_loss = vela[INDICE_SL] 
                 else:
-                    self.stop_loss = vela[INDICE_MH]
+                    self.stop_loss = vela[INDICE_SH]
                 
                 for elem in vela[INDICE_O : INDICE_C+1]:
                     

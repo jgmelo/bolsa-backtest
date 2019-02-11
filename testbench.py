@@ -8,7 +8,7 @@ Created on Thu Nov 22 09:57:12 2018
 from bkt import BackTest
 from visual import Visualiza
 
-DATA_ANALISE = '2019.02.01'
+DATA_ANALISE = '2019.02.06'
 # Cria objeto.
 hilo04 = BackTest()
 
@@ -25,4 +25,9 @@ separado = hilo04_vis.categoriza_por_data(hilo04.get_lista_fonte())
 # Cria dicionario de annotations
 #dic_ann = hilo04.estr_hilo(separado[DATA_ANALISE])
 dic_ann = hilo04.single_bar(separado[DATA_ANALISE])
-hilo04_vis.plota(separado[DATA_ANALISE], dic_ann, plota_MH = True, plota_ML = True, plota_MC = True)
+hilo04_vis.plota(separado[DATA_ANALISE], dic_ann, 
+                 #plota_MH = True,
+                 #plota_ML = True, 
+                 plota_MC = True,
+                 plota_SH = True,
+                 plota_SL = True)

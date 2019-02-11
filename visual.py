@@ -30,6 +30,8 @@ INDICE_MH = 9
 INDICE_ML = 10
 INDICE_MO = 11
 INDICE_MC = 12
+INDICE_SH = 13
+INDICE_SL = 14
     
 class Visualiza(object):
     
@@ -72,7 +74,9 @@ class Visualiza(object):
               plota_MH = False, 
               plota_ML = False,
               plota_MO = False,
-              plota_MC = False):
+              plota_MC = False,
+              plota_SH = False,
+              plota_SL = False):
         
         self.fig = plt.figure(figsize=(TAMANHO_FIG_X,TAMANHO_FIG_Y))
         self.ax = self.fig.add_subplot(111)
@@ -131,6 +135,14 @@ class Visualiza(object):
         if plota_MC == True:
             self.coluna_medias_aux = list(map(lambda x: x[INDICE_MC], self.dados))
             self.ax.plot(self.coluna_data_float, self.coluna_medias_aux, color='k')
+            
+        if plota_SH == True:
+            self.coluna_medias_aux = list(map(lambda x: x[INDICE_SH], self.dados))
+            self.ax.plot(self.coluna_data_float, self.coluna_medias_aux, color='r')
+            
+        if plota_SL == True:
+            self.coluna_medias_aux = list(map(lambda x: x[INDICE_SL], self.dados))
+            self.ax.plot(self.coluna_data_float, self.coluna_medias_aux, color='r')
 
         # *************************************
         # ***** Plotagem do volume. ***********
