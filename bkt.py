@@ -805,8 +805,8 @@ class BackTest(object):
                         self.cont_vermelhas = 0
                         
                         self.d_params_annotation['texto'].append('S C, TP')
-                        self.d_params_annotation['y_annot'].append(vela[INDICE_C])
-                        self.d_params_annotation['ytext_annot'].append(vela[INDICE_C]-10)
+                        self.d_params_annotation['y_annot'].append(elem)
+                        self.d_params_annotation['ytext_annot'].append(elem-10)
                         self.d_params_annotation['datahora'].append(vela[INDICE_K])
                 
                         #-----------------------
