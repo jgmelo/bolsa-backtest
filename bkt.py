@@ -33,7 +33,7 @@ TOLERANCIA_POS_SBAR = 2
 
 # Fator que multiplicará o módulo da diferença entre MC e MH e ML
 # para definir o stop loss com offset a partir de MH/ML.
-FATOR_STOP_MM = 0.8
+FATOR_STOP_MM = 3.5
 
 # Padrão de uso da classe:
 # 1. Inicializa objeto BackTest();
@@ -704,8 +704,8 @@ class BackTest(object):
                         self.aporte = 10*self.aporte_aux if self.aporte_aux < 10 else 100
                         self.saldo -= 10*self.aporte_aux if self.aporte_aux < 10 else 100
                         
-                    self.aux_take_profit = self.gatilho_entrada - self.stop_loss
-                    self.take_profit = self.gatilho_entrada + FATOR_LUCRO * self.aux_take_profit
+                    self.aux_take_profit = elem - self.stop_loss
+                    self.take_profit = elem + FATOR_LUCRO * self.aux_take_profit
                     
                     self.d_params_annotation['texto'].append('E C')
                     self.d_params_annotation['y_annot'].append(elem)
