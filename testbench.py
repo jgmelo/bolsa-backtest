@@ -8,7 +8,7 @@ Created on Thu Nov 22 09:57:12 2018
 from bkt import BackTest
 from visual import Visualiza
 
-DATA_ANALISE = '2019.02.11'
+DATA_ANALISE = '2019.01.02'
 # Cria objeto.
 hilo04 = BackTest()
 

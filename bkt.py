@@ -24,7 +24,7 @@ INDICE_SL = 14
 
 # Fator que multiplicará o stop loss para definir o take profit.
 #> Implementar o fornecimento desse fator como argumento.
-FATOR_LUCRO = 0.85
+FATOR_LUCRO = 1.1
 
 # Número de barras a ser tolerado antes de cancelar o setup Single Bar.
 TOLERANCIA_POS_SBAR = 2
@@ -33,7 +33,11 @@ TOLERANCIA_POS_SBAR = 2
 
 # Fator que multiplicará o módulo da diferença entre MC e MH e ML
 # para definir o stop loss com offset a partir de MH/ML.
-FATOR_STOP_MM = 3.5
+FATOR_STOP_MM = 5
+
+# Fator que multiplicará os pontos ganhos ou perdidos, dependendo do ativo
+# alvo do backtest.
+FATOR_ATIVO = 0.2
 
 # Padrão de uso da classe:
 # 1. Inicializa objeto BackTest();
@@ -555,6 +559,7 @@ class BackTest(object):
         self.tol_pos_sbar = 0
         self.gatilho_entrada = 0.0
         self.C_ultima_vela = 0.0
+        self.preco_entrada = 0.0
         self.ohlc_aux = []
         self.fifo_velas = []
         self.flag_entrou = False
@@ -688,6 +693,7 @@ class BackTest(object):
                 (self.d_ultima_media['MC'][1] > self.d_ultima_media['MC'][0]):
                     
                     self.flag_entrou = True
+                    self.preco_entrada = elem
                     
                     # Utilizando MML como stop loss.
                     self.stop_loss = vela[INDICE_ML] 
@@ -732,6 +738,7 @@ class BackTest(object):
                 (self.d_ultima_media['MC'][1] < self.d_ultima_media['MC'][0]):
                     
                     self.flag_entrou = True
+                    self.preco_entrada = elem
                     
                     # Utilizando MMH como stop loss.
                     self.stop_loss = vela[INDICE_MH]
@@ -811,7 +818,7 @@ class BackTest(object):
                     
                     if self.flag_sbar_compra and (elem > self.take_profit):
 
-                        self.saldo += self.aporte + (elem - self.gatilho_entrada)*10
+                        self.saldo += self.aporte + (elem - self.preco_entrada)*FATOR_ATIVO
                         self.ohlc_aux = []
                         self.flag_entrou = False
                         self.flag_sbar_compra = False
@@ -826,7 +833,7 @@ class BackTest(object):
                         #-----------------------
                         #----- Debug print -----
                         #-----------------------
-                        print('Saída de compra, take profit.')
+                        print('Saída de compra a ' + str(elem) +  ', take profit.')
                         print('Hora da saída: ' + vela[INDICE_TH])
                         print('Saldo após saída: ' + str(self.saldo))
                         print('===========================================')
@@ -849,7 +856,7 @@ class BackTest(object):
                         #-----------------------
                         #----- Debug print -----
                         #-----------------------
-                        print('Saída de compra, stop loss.')
+                        print('Saída de compra a ' + str(elem) + ', stop loss.')
                         print('Hora da saída: ' + vela[INDICE_TH])
                         print('Saldo após saída: ' + str(self.saldo))
                         print('===========================================')
@@ -858,7 +865,7 @@ class BackTest(object):
                     
                     elif self.flag_sbar_venda and (elem < self.take_profit):
 
-                        self.saldo += self.aporte + (self.gatilho_entrada - elem)*10
+                        self.saldo += self.aporte + (self.preco_entrada - elem)*FATOR_ATIVO
                         self.ohlc_aux = []
                         self.flag_entrou = False # Indica saída do trade.
                         self.flag_sbar_venda = False
@@ -873,7 +880,7 @@ class BackTest(object):
                         #-----------------------
                         #----- Debug print -----
                         #-----------------------
-                        print('Saída de venda, take profit.')
+                        print('Saída de venda a ' + str(elem) + ', take profit.')
                         print('Hora da saída: ' + vela[INDICE_TH])
                         print('Saldo após saída: ' + str(self.saldo))
                         print('===========================================')
@@ -896,7 +903,7 @@ class BackTest(object):
                         #-----------------------
                         #----- Debug print -----
                         #-----------------------
-                        print('Saída de venda, stop loss.')
+                        print('Saída de venda a ' + str(elem) + ', stop loss.')
                         print('Hora da saída: ' + vela[INDICE_TH])
                         print('Saldo após saída: ' + str(self.saldo))
                         print('===========================================')
