@@ -37,7 +37,7 @@ FATOR_STOP_MM = 5
 
 # Fator que multiplicará os pontos ganhos ou perdidos, dependendo do ativo
 # alvo do backtest.
-FATOR_ATIVO = 0.2
+FATOR_ATIVO = 10
 
 # Padrão de uso da classe:
 # 1. Inicializa objeto BackTest();
@@ -714,8 +714,8 @@ class BackTest(object):
                     self.take_profit = elem + FATOR_LUCRO * self.aux_take_profit
                     
                     self.d_params_annotation['texto'].append('E C')
-                    self.d_params_annotation['y_annot'].append(elem)
-                    self.d_params_annotation['ytext_annot'].append(elem-10)
+                    self.d_params_annotation['y_annot'].append(self.preco_entrada)
+                    self.d_params_annotation['ytext_annot'].append(self.preco_entrada-10)
                     self.d_params_annotation['datahora'].append(vela[INDICE_K])
                     
                     #-----------------------
@@ -723,7 +723,7 @@ class BackTest(object):
                     #-----------------------
                     print('Entrada, compra.')
                     print('Hora da entrada: ' + vela[INDICE_TH])
-                    print('Preço de entrada: ' + str(vela[INDICE_C]))
+                    print('Preço de entrada: ' + str(self.preco_entrada))
                     print('Preço de take profit: ' + str(self.take_profit))
                     print('Preço de stop loss: ' + str(self.stop_loss))
                     print('Aporte: ' + str(self.aporte))
@@ -759,8 +759,8 @@ class BackTest(object):
                     self.take_profit = elem - FATOR_LUCRO * self.aux_take_profit
                     
                     self.d_params_annotation['texto'].append('E V')
-                    self.d_params_annotation['y_annot'].append(elem)
-                    self.d_params_annotation['ytext_annot'].append(elem-10)
+                    self.d_params_annotation['y_annot'].append(self.preco_entrada)
+                    self.d_params_annotation['ytext_annot'].append(self.preco_entrada-10)
                     self.d_params_annotation['datahora'].append(vela[INDICE_K])
                     
                     #-----------------------
@@ -768,7 +768,7 @@ class BackTest(object):
                     #-----------------------
                     print('Entrada, venda.')
                     print('Hora da entrada: ' + vela[INDICE_TH])
-                    print('Preço de entrada: ' + str(vela[INDICE_C]))
+                    print('Preço de entrada: ' + str(self.preco_entrada))
                     print('Preço de take profit: ' + str(self.take_profit))
                     print('Preço de stop loss: ' + str(self.stop_loss))
                     print('Aporte: ' + str(self.aporte))
@@ -818,7 +818,7 @@ class BackTest(object):
                     
                     if self.flag_sbar_compra and (elem > self.take_profit):
 
-                        self.saldo += self.aporte + (elem - self.preco_entrada)*FATOR_ATIVO
+                        self.saldo += self.aporte + (self.take_profit - self.preco_entrada)*FATOR_ATIVO
                         self.ohlc_aux = []
                         self.flag_entrou = False
                         self.flag_sbar_compra = False
@@ -826,14 +826,17 @@ class BackTest(object):
                         self.cont_vermelhas = 0
                         
                         self.d_params_annotation['texto'].append('S C, TP')
-                        self.d_params_annotation['y_annot'].append(elem)
-                        self.d_params_annotation['ytext_annot'].append(elem-10)
+                        self.d_params_annotation['y_annot'].append(self.take_profit)
+                        self.d_params_annotation['ytext_annot'].append(self.take_profit-10)
                         self.d_params_annotation['datahora'].append(vela[INDICE_K])
                 
                         #-----------------------
                         #----- Debug print -----
                         #-----------------------
-                        print('Saída de compra a ' + str(elem) +  ', take profit.')
+                        print('Saída de compra a '
+                              + str(self.take_profit)
+                              +  ', take profit. Ganho de ' 
+                              + str((self.take_profit - self.preco_entrada)*FATOR_ATIVO))
                         print('Hora da saída: ' + vela[INDICE_TH])
                         print('Saldo após saída: ' + str(self.saldo))
                         print('===========================================')
@@ -865,7 +868,7 @@ class BackTest(object):
                     
                     elif self.flag_sbar_venda and (elem < self.take_profit):
 
-                        self.saldo += self.aporte + (self.preco_entrada - elem)*FATOR_ATIVO
+                        self.saldo += self.aporte + (self.preco_entrada - self.take_profit)*FATOR_ATIVO
                         self.ohlc_aux = []
                         self.flag_entrou = False # Indica saída do trade.
                         self.flag_sbar_venda = False
@@ -873,14 +876,17 @@ class BackTest(object):
                         self.cont_vermelhas = 0
                         
                         self.d_params_annotation['texto'].append('S V, TP')
-                        self.d_params_annotation['y_annot'].append(elem)
-                        self.d_params_annotation['ytext_annot'].append(elem-15)
+                        self.d_params_annotation['y_annot'].append(self.take_profit)
+                        self.d_params_annotation['ytext_annot'].append(self.take_profit-15)
                         self.d_params_annotation['datahora'].append(vela[INDICE_K])
                         
                         #-----------------------
                         #----- Debug print -----
                         #-----------------------
-                        print('Saída de venda a ' + str(elem) + ', take profit.')
+                        print('Saída de venda a ' 
+                              + str(self.take_profit) 
+                              + ', take profit. Ganho de ' 
+                              + str((self.preco_entrada - self.take_profit)*FATOR_ATIVO))
                         print('Hora da saída: ' + vela[INDICE_TH])
                         print('Saldo após saída: ' + str(self.saldo))
                         print('===========================================')
