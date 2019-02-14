@@ -24,7 +24,7 @@ INDICE_SL = 14
 
 # Fator que multiplicará o stop loss para definir o take profit.
 #> Implementar o fornecimento desse fator como argumento.
-FATOR_LUCRO = 1.1
+FATOR_LUCRO = 1
 
 # Número de barras a ser tolerado antes de cancelar o setup Single Bar.
 TOLERANCIA_POS_SBAR = 2
@@ -33,7 +33,7 @@ TOLERANCIA_POS_SBAR = 2
 
 # Fator que multiplicará o módulo da diferença entre MC e MH e ML
 # para definir o stop loss com offset a partir de MH/ML.
-FATOR_STOP_MM = 5
+FATOR_STOP_MM = 5.5
 
 # Fator que multiplicará os pontos ganhos ou perdidos, dependendo do ativo
 # alvo do backtest.
@@ -151,13 +151,23 @@ class BackTest(object):
         list(map(lambda l_orig, l_medias: l_orig.append(l_medias),self.lista_fonte, self.lista_medias_O))
         list(map(lambda l_orig, l_medias: l_orig.append(l_medias),self.lista_fonte, self.lista_medias_C))
         
+        # Calcula o offset base a ser aplicado às MMs H e L.
+        # Offset é a média das distâncias entre MM e MH/ML.
+        self.offset_MH = sum(map(lambda x:
+            x[INDICE_MH] - x[INDICE_MC],
+            self.lista_fonte)) / len(self.lista_fonte)
+            
+        self.offset_ML = sum(map(lambda x:
+            x[INDICE_MC] - x[INDICE_ML],
+            self.lista_fonte)) / len(self.lista_fonte)
+            
+        self.offset = (self.offset_MH + self.offset_ML) / 2
+        
         # Acrescenta ao final de cada elemento de self.lista_fonte as MMs H e L
         # com offset, para ajuste de stop.
         for elem in self.lista_fonte:
-            self.offset_MH = (elem[INDICE_MH] - elem[INDICE_MC]) * FATOR_STOP_MM
-            self.offset_ML = (elem[INDICE_MC] - elem[INDICE_ML]) * FATOR_STOP_MM
-            elem.append(elem[INDICE_MH] + self.offset_MH)
-            elem.append(elem[INDICE_ML] - self.offset_ML)
+            elem.append(elem[INDICE_MH] + self.offset*FATOR_STOP_MM)
+            elem.append(elem[INDICE_ML] - self.offset*FATOR_STOP_MM)
             
         return self.lista_fonte
 
