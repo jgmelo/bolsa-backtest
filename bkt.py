@@ -33,11 +33,15 @@ TOLERANCIA_POS_SBAR = 2
 
 # Fator que multiplicará o módulo da diferença entre MC e MH e ML
 # para definir o stop loss com offset a partir de MH/ML.
-FATOR_STOP_MM = 5.5
+FATOR_STOP_MM = 6.5
+
+# Valor de perda máxima por operação,
+# em reais, para limitar os valores de stop loss.
+PERDA_MAX_REAIS = 100
 
 # Fator que multiplicará os pontos ganhos ou perdidos, dependendo do ativo
 # alvo do backtest.
-FATOR_ATIVO = 10
+FATOR_ATIVO = 0.2
 
 # Padrão de uso da classe:
 # 1. Inicializa objeto BackTest();
@@ -818,10 +822,21 @@ class BackTest(object):
             
             if self.flag_entrou:
                 
-                # Atualiza o stop loss.
+                # Verifica e limita o stop loss na lista vela,
+                # de acordo com o valor máximo de perda definido por operação.
+                # Atualiza a variável de stop loss do objeto.
                 if self.flag_sbar_compra:
+                    
+                    if (self.preco_entrada-vela[INDICE_SL]) > PERDA_MAX_REAIS/FATOR_ATIVO:
+                        vela[INDICE_SL] = self.preco_entrada - PERDA_MAX_REAIS/FATOR_ATIVO
+                        
                     self.stop_loss = vela[INDICE_SL] 
+                    
                 else:
+                    
+                    if (vela[INDICE_SH]-self.preco_entrada) > PERDA_MAX_REAIS/FATOR_ATIVO:
+                        vela[INDICE_SH] = self.preco_entrada + PERDA_MAX_REAIS/FATOR_ATIVO
+                        
                     self.stop_loss = vela[INDICE_SH]
                 
                 for elem in vela[INDICE_O : INDICE_C+1]:
