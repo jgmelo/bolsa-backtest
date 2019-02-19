@@ -718,16 +718,16 @@ class BackTest(object):
                     else:
                         # Variável auxiliar para diminuir a expressão.
                         self.aporte_aux = elem - self.stop_loss
-                        # Resultado é em pontos, e cada ponto vale R$10 (ativo WDOL).
+                        # Resultado é em pontos, e cada ponto vale FATOR_ATIVO reais.
                         # Se for tal que o aporte seja maior que R$100, o mesmo fica
                         # limitado a R$100.
-                        self.aporte = 10*self.aporte_aux if self.aporte_aux < 10 else 100
-                        self.saldo -= 10*self.aporte_aux if self.aporte_aux < 10 else 100
+                        self.aporte = FATOR_ATIVO*self.aporte_aux if self.aporte_aux < 10 else 100
+                        self.saldo -= FATOR_ATIVO*self.aporte_aux if self.aporte_aux < 10 else 100
                         
                     self.aux_take_profit = elem - self.stop_loss
                     self.take_profit = elem + FATOR_LUCRO * self.aux_take_profit
                     
-                    self.d_params_annotation['texto'].append('E C')
+                    self.d_params_annotation['texto'].append('E C ' + str(self.preco_entrada))
                     self.d_params_annotation['y_annot'].append(self.preco_entrada)
                     self.d_params_annotation['ytext_annot'].append(self.preco_entrada-10)
                     self.d_params_annotation['datahora'].append(vela[INDICE_K])
@@ -763,16 +763,16 @@ class BackTest(object):
                     else:
                         # Variável auxiliar para diminuir a expressão.
                         self.aporte_aux = self.stop_loss - elem
-                        # Resultado é em pontos, e cada ponto vale R$10 (ativo WDOL).
+                        # Resultado é em pontos, e cada ponto vale FATOR_ATIVO reais.
                         # Se for tal que o aporte seja maior que R$100, o mesmo fica
                         # limitado a R$100.
-                        self.aporte = 10*self.aporte_aux if self.aporte_aux < 10 else 100
-                        self.saldo -= 10*self.aporte_aux if self.aporte_aux < 10 else 100
+                        self.aporte = FATOR_ATIVO*self.aporte_aux if self.aporte_aux < 10 else 100
+                        self.saldo -= FATOR_ATIVO*self.aporte_aux if self.aporte_aux < 10 else 100
                          
                     self.aux_take_profit = self.stop_loss - elem
                     self.take_profit = elem - FATOR_LUCRO * self.aux_take_profit
                     
-                    self.d_params_annotation['texto'].append('E V')
+                    self.d_params_annotation['texto'].append('E V ' + str(self.preco_entrada))
                     self.d_params_annotation['y_annot'].append(self.preco_entrada)
                     self.d_params_annotation['ytext_annot'].append(self.preco_entrada-10)
                     self.d_params_annotation['datahora'].append(vela[INDICE_K])
@@ -850,7 +850,7 @@ class BackTest(object):
                         self.cont_verdes = 0
                         self.cont_vermelhas = 0
                         
-                        self.d_params_annotation['texto'].append('S C, TP')
+                        self.d_params_annotation['texto'].append('S C, TP ' + str(self.take_profit))
                         self.d_params_annotation['y_annot'].append(self.take_profit)
                         self.d_params_annotation['ytext_annot'].append(self.take_profit-10)
                         self.d_params_annotation['datahora'].append(vela[INDICE_K])
@@ -876,15 +876,15 @@ class BackTest(object):
                         self.cont_verdes = 0
                         self.cont_vermelhas = 0
                         
-                        self.d_params_annotation['texto'].append('S C, SL')
-                        self.d_params_annotation['y_annot'].append(elem)
-                        self.d_params_annotation['ytext_annot'].append(elem-15)
+                        self.d_params_annotation['texto'].append('S C, SL ' + str(self.stop_loss))
+                        self.d_params_annotation['y_annot'].append(self.stop_loss)
+                        self.d_params_annotation['ytext_annot'].append(self.stop_loss-15)
                         self.d_params_annotation['datahora'].append(vela[INDICE_K])
                         
                         #-----------------------
                         #----- Debug print -----
                         #-----------------------
-                        print('Saída de compra a ' + str(elem) + ', stop loss.')
+                        print('Saída de compra a ' + str(self.stop_loss) + ', stop loss.')
                         print('Hora da saída: ' + vela[INDICE_TH])
                         print('Saldo após saída: ' + str(self.saldo))
                         print('===========================================')
@@ -900,7 +900,7 @@ class BackTest(object):
                         self.cont_verdes = 0
                         self.cont_vermelhas = 0
                         
-                        self.d_params_annotation['texto'].append('S V, TP')
+                        self.d_params_annotation['texto'].append('S V, TP ' + str(self.take_profit))
                         self.d_params_annotation['y_annot'].append(self.take_profit)
                         self.d_params_annotation['ytext_annot'].append(self.take_profit-15)
                         self.d_params_annotation['datahora'].append(vela[INDICE_K])
@@ -926,15 +926,15 @@ class BackTest(object):
                         self.cont_verdes = 0
                         self.cont_vermelhas = 0
                         
-                        self.d_params_annotation['texto'].append('S V, SL')
-                        self.d_params_annotation['y_annot'].append(elem)
-                        self.d_params_annotation['ytext_annot'].append(elem-15)
+                        self.d_params_annotation['texto'].append('S V, SL ' + str(self.stop_loss))
+                        self.d_params_annotation['y_annot'].append(self.stop_loss)
+                        self.d_params_annotation['ytext_annot'].append(self.stop_loss-15)
                         self.d_params_annotation['datahora'].append(vela[INDICE_K])
                         
                         #-----------------------
                         #----- Debug print -----
                         #-----------------------
-                        print('Saída de venda a ' + str(elem) + ', stop loss.')
+                        print('Saída de venda a ' + str(self.stop_loss) + ', stop loss.')
                         print('Hora da saída: ' + vela[INDICE_TH])
                         print('Saldo após saída: ' + str(self.saldo))
                         print('===========================================')
