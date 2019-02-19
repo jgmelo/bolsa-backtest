@@ -766,8 +766,8 @@ class BackTest(object):
                         # Resultado é em pontos, e cada ponto vale FATOR_ATIVO reais.
                         # Se for tal que o aporte seja maior que R$100, o mesmo fica
                         # limitado a R$100.
-                        self.aporte = FATOR_ATIVO*self.aporte_aux if self.aporte_aux < 10 else 100
-                        self.saldo -= FATOR_ATIVO*self.aporte_aux if self.aporte_aux < 10 else 100
+                        self.aporte = FATOR_ATIVO*self.aporte_aux if self.aporte_aux*FATOR_ATIVO < PERDA_MAX_REAIS else PERDA_MAX_REAIS
+                        self.saldo -= FATOR_ATIVO*self.aporte_aux if self.aporte_aux*FATOR_ATIVO < PERDA_MAX_REAIS else PERDA_MAX_REAIS
                          
                     self.aux_take_profit = self.stop_loss - elem
                     self.take_profit = elem - FATOR_LUCRO * self.aux_take_profit
