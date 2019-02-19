@@ -568,6 +568,7 @@ class BackTest(object):
         self.aporte = 0.0
         self.take_profit = 0.0
         self.stop_loss = 0.0
+        self.sto_loss_base = 0.0
         self.cont_verdes = 0
         self.cont_vermelhas = 0
         self.tol_pos_sbar = 0
@@ -709,22 +710,23 @@ class BackTest(object):
                     self.flag_entrou = True
                     self.preco_entrada = elem
                     
-                    # Utilizando MML como stop loss.
-                    self.stop_loss = vela[INDICE_ML] 
+                    # Utilizando MML como stop loss base (ou seja, antes da
+                    # multiplicação por FATOR_STOP_MM.
+                    self.stop_loss_base = vela[INDICE_ML] 
                     
                     if self.saldo >= 100:
                         self.aporte = 100
                         self.saldo -= 100
                     else:
                         # Variável auxiliar para diminuir a expressão.
-                        self.aporte_aux = elem - self.stop_loss
+                        self.aporte_aux = elem - self.stop_loss_base
                         # Resultado é em pontos, e cada ponto vale FATOR_ATIVO reais.
                         # Se for tal que o aporte seja maior que R$100, o mesmo fica
                         # limitado a R$100.
                         self.aporte = FATOR_ATIVO*self.aporte_aux if self.aporte_aux < 10 else 100
                         self.saldo -= FATOR_ATIVO*self.aporte_aux if self.aporte_aux < 10 else 100
                         
-                    self.aux_take_profit = elem - self.stop_loss
+                    self.aux_take_profit = elem - self.stop_loss_base
                     self.take_profit = elem + FATOR_LUCRO * self.aux_take_profit
                     
                     self.d_params_annotation['texto'].append('E C ' + str(self.preco_entrada))
@@ -739,7 +741,7 @@ class BackTest(object):
                     print('Hora da entrada: ' + vela[INDICE_TH])
                     print('Preço de entrada: ' + str(self.preco_entrada))
                     print('Preço de take profit: ' + str(self.take_profit))
-                    print('Preço de stop loss: ' + str(self.stop_loss))
+                    print('Preço de stop loss: ' + str(self.stop_loss_base))
                     print('Aporte: ' + str(self.aporte))
                     print('Saldo após aporte: ' + str(self.saldo))
                     print('===========================================')
@@ -754,22 +756,23 @@ class BackTest(object):
                     self.flag_entrou = True
                     self.preco_entrada = elem
                     
-                    # Utilizando MMH como stop loss.
-                    self.stop_loss = vela[INDICE_MH]
+                    # Utilizando MML como stop loss base (ou seja, antes da
+                    # multiplicação por FATOR_STOP_MM.
+                    self.stop_loss_base = vela[INDICE_MH]
                     
                     if self.saldo >= 100:
                         self.aporte = 100
                         self.saldo -= 100
                     else:
                         # Variável auxiliar para diminuir a expressão.
-                        self.aporte_aux = self.stop_loss - elem
+                        self.aporte_aux = self.stop_loss_base - elem
                         # Resultado é em pontos, e cada ponto vale FATOR_ATIVO reais.
                         # Se for tal que o aporte seja maior que R$100, o mesmo fica
                         # limitado a R$100.
                         self.aporte = FATOR_ATIVO*self.aporte_aux if self.aporte_aux*FATOR_ATIVO < PERDA_MAX_REAIS else PERDA_MAX_REAIS
                         self.saldo -= FATOR_ATIVO*self.aporte_aux if self.aporte_aux*FATOR_ATIVO < PERDA_MAX_REAIS else PERDA_MAX_REAIS
                          
-                    self.aux_take_profit = self.stop_loss - elem
+                    self.aux_take_profit = self.stop_loss_base - elem
                     self.take_profit = elem - FATOR_LUCRO * self.aux_take_profit
                     
                     self.d_params_annotation['texto'].append('E V ' + str(self.preco_entrada))
@@ -784,7 +787,7 @@ class BackTest(object):
                     print('Hora da entrada: ' + vela[INDICE_TH])
                     print('Preço de entrada: ' + str(self.preco_entrada))
                     print('Preço de take profit: ' + str(self.take_profit))
-                    print('Preço de stop loss: ' + str(self.stop_loss))
+                    print('Preço de stop loss: ' + str(self.stop_loss_base))
                     print('Aporte: ' + str(self.aporte))
                     print('Saldo após aporte: ' + str(self.saldo))
                     print('===========================================')
