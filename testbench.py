@@ -3,12 +3,12 @@
 Created on Thu Nov 22 09:57:12 2018
 
 @author: usuario
-"""
+-"""
 
 from bkt import BackTest
 from visual import Visualiza
 
-DATA_ANALISE = '2019.02.07' 
+DATA_ANALISE = '2019.01.22' 
 # Cria objeto.
 hilo04 = BackTest()
 

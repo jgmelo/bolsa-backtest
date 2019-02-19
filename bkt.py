@@ -33,7 +33,7 @@ TOLERANCIA_POS_SBAR = 2
 
 # Fator que multiplicará o módulo da diferença entre MC e MH e ML
 # para definir o stop loss com offset a partir de MH/ML.
-FATOR_STOP_MM = 6.5
+FATOR_STOP_MM = 2.5
 
 # Valor de perda máxima por operação,
 # em reais, para limitar os valores de stop loss.
@@ -568,7 +568,8 @@ class BackTest(object):
         self.aporte = 0.0
         self.take_profit = 0.0
         self.stop_loss = 0.0
-        self.sto_loss_base = 0.0
+        self.stop_loss_base = 0.0
+        self.stop_loss_ajustado = 0.0
         self.cont_verdes = 0
         self.cont_vermelhas = 0
         self.tol_pos_sbar = 0
@@ -712,19 +713,20 @@ class BackTest(object):
                     
                     # Utilizando MML como stop loss base (ou seja, antes da
                     # multiplicação por FATOR_STOP_MM.
-                    self.stop_loss_base = vela[INDICE_ML] 
+                    self.stop_loss_base = vela[INDICE_ML]
+                    self.stop_loss_ajustado = vela[INDICE_SL]
                     
                     if self.saldo >= 100:
                         self.aporte = 100
                         self.saldo -= 100
                     else:
                         # Variável auxiliar para diminuir a expressão.
-                        self.aporte_aux = elem - self.stop_loss_base
+                        self.aporte_aux = elem - self.stop_loss_ajustado
                         # Resultado é em pontos, e cada ponto vale FATOR_ATIVO reais.
-                        # Se for tal que o aporte seja maior que R$100, o mesmo fica
-                        # limitado a R$100.
-                        self.aporte = FATOR_ATIVO*self.aporte_aux if self.aporte_aux < 10 else 100
-                        self.saldo -= FATOR_ATIVO*self.aporte_aux if self.aporte_aux < 10 else 100
+                        # Se for tal que o aporte seja maior que a perda máxima
+                        # por operação, o mesmo fica limitado a tal valor.
+                        self.aporte = FATOR_ATIVO*self.aporte_aux if self.aporte_aux*FATOR_ATIVO < PERDA_MAX_REAIS else PERDA_MAX_REAIS
+                        self.saldo -= FATOR_ATIVO*self.aporte_aux if self.aporte_aux*FATOR_ATIVO < PERDA_MAX_REAIS else PERDA_MAX_REAIS
                         
                     self.aux_take_profit = elem - self.stop_loss_base
                     self.take_profit = elem + FATOR_LUCRO * self.aux_take_profit
@@ -741,7 +743,7 @@ class BackTest(object):
                     print('Hora da entrada: ' + vela[INDICE_TH])
                     print('Preço de entrada: ' + str(self.preco_entrada))
                     print('Preço de take profit: ' + str(self.take_profit))
-                    print('Preço de stop loss: ' + str(self.stop_loss_base))
+                    print('Preço de stop loss: ' + str(self.stop_loss_ajustado))
                     print('Aporte: ' + str(self.aporte))
                     print('Saldo após aporte: ' + str(self.saldo))
                     print('===========================================')
@@ -759,16 +761,17 @@ class BackTest(object):
                     # Utilizando MML como stop loss base (ou seja, antes da
                     # multiplicação por FATOR_STOP_MM.
                     self.stop_loss_base = vela[INDICE_MH]
+                    self.stop_loss_ajustado = vela[INDICE_SH]
                     
                     if self.saldo >= 100:
                         self.aporte = 100
                         self.saldo -= 100
                     else:
                         # Variável auxiliar para diminuir a expressão.
-                        self.aporte_aux = self.stop_loss_base - elem
+                        self.aporte_aux = self.stop_loss_ajustado*FATOR_STOP_MM - elem
                         # Resultado é em pontos, e cada ponto vale FATOR_ATIVO reais.
-                        # Se for tal que o aporte seja maior que R$100, o mesmo fica
-                        # limitado a R$100.
+                        # Se for tal que o aporte seja maior que a perda máxima
+                        # por operação, o mesmo fica limitado a tal valor.
                         self.aporte = FATOR_ATIVO*self.aporte_aux if self.aporte_aux*FATOR_ATIVO < PERDA_MAX_REAIS else PERDA_MAX_REAIS
                         self.saldo -= FATOR_ATIVO*self.aporte_aux if self.aporte_aux*FATOR_ATIVO < PERDA_MAX_REAIS else PERDA_MAX_REAIS
                          
@@ -787,7 +790,7 @@ class BackTest(object):
                     print('Hora da entrada: ' + vela[INDICE_TH])
                     print('Preço de entrada: ' + str(self.preco_entrada))
                     print('Preço de take profit: ' + str(self.take_profit))
-                    print('Preço de stop loss: ' + str(self.stop_loss_base))
+                    print('Preço de stop loss: ' + str(self.stop_loss_ajustado))
                     print('Aporte: ' + str(self.aporte))
                     print('Saldo após aporte: ' + str(self.saldo))
                     print('===========================================')
