@@ -24,7 +24,7 @@ INDICE_SL = 14
 
 # Fator que multiplicará o stop loss para definir o take profit.
 #> Implementar o fornecimento desse fator como argumento.
-FATOR_LUCRO = 1
+FATOR_LUCRO = 0.5
 
 # Número de barras a ser tolerado antes de cancelar o setup Single Bar.
 TOLERANCIA_POS_SBAR = 2
@@ -570,6 +570,10 @@ class BackTest(object):
         self.stop_loss = 0.0
         self.stop_loss_base = 0.0
         self.stop_loss_ajustado = 0.0
+        # Var auxiliar para definir estorno no caso de ganho com stop (trailing)
+        self.stop_loss_calc_estorno = 0.0
+        # Var auxiliar para definir estorno no caso de ganho com stop (trailing)
+        self.estorno_stop_ganho = 0.0
         self.cont_verdes = 0
         self.cont_vermelhas = 0
         self.tol_pos_sbar = 0
@@ -716,18 +720,27 @@ class BackTest(object):
                     self.stop_loss_base = vela[INDICE_ML]
                     self.stop_loss_ajustado = vela[INDICE_SL]
                     
-                    if self.saldo >= 100:
-                        self.aporte = 100
-                        self.saldo -= 100
+                    # Definição do aporte.
+                    if self.saldo >= PERDA_MAX_REAIS:
+                        self.aporte = PERDA_MAX_REAIS
+                        self.saldo -= PERDA_MAX_REAIS
                     else:
                         # Variável auxiliar para diminuir a expressão.
                         self.aporte_aux = elem - self.stop_loss_ajustado
+                        
                         # Resultado é em pontos, e cada ponto vale FATOR_ATIVO reais.
                         # Se for tal que o aporte seja maior que a perda máxima
                         # por operação, o mesmo fica limitado a tal valor.
                         self.aporte = FATOR_ATIVO*self.aporte_aux if self.aporte_aux*FATOR_ATIVO < PERDA_MAX_REAIS else PERDA_MAX_REAIS
                         self.saldo -= FATOR_ATIVO*self.aporte_aux if self.aporte_aux*FATOR_ATIVO < PERDA_MAX_REAIS else PERDA_MAX_REAIS
-                        
+
+                    # Prepara var para definição de estorno no caso de
+                    # ganho com trailing stop.
+                    if (elem - self.stop_loss_ajustado)*FATOR_ATIVO > PERDA_MAX_REAIS:
+                        self.stop_loss_calc_estorno = elem - PERDA_MAX_REAIS/FATOR_ATIVO
+                    else:
+                        self.stop_loss_calc_estorno = self.stop_loss_ajustado
+                            
                     self.aux_take_profit = elem - self.stop_loss_base
                     self.take_profit = elem + FATOR_LUCRO * self.aux_take_profit
                     
@@ -763,18 +776,26 @@ class BackTest(object):
                     self.stop_loss_base = vela[INDICE_MH]
                     self.stop_loss_ajustado = vela[INDICE_SH]
                     
-                    if self.saldo >= 100:
-                        self.aporte = 100
-                        self.saldo -= 100
+                    # Definição do aporte.
+                    if self.saldo >= PERDA_MAX_REAIS:
+                        self.aporte = PERDA_MAX_REAIS
+                        self.saldo -= PERDA_MAX_REAIS
                     else:
                         # Variável auxiliar para diminuir a expressão.
-                        self.aporte_aux = self.stop_loss_ajustado*FATOR_STOP_MM - elem
+                        self.aporte_aux = self.stop_loss_ajustado - elem
                         # Resultado é em pontos, e cada ponto vale FATOR_ATIVO reais.
                         # Se for tal que o aporte seja maior que a perda máxima
                         # por operação, o mesmo fica limitado a tal valor.
                         self.aporte = FATOR_ATIVO*self.aporte_aux if self.aporte_aux*FATOR_ATIVO < PERDA_MAX_REAIS else PERDA_MAX_REAIS
                         self.saldo -= FATOR_ATIVO*self.aporte_aux if self.aporte_aux*FATOR_ATIVO < PERDA_MAX_REAIS else PERDA_MAX_REAIS
-                         
+                    
+                    # Prepara var para definição de estorno no caso de
+                    # ganho com trailing stop.
+                    if (self.stop_loss_ajustado - elem)*FATOR_ATIVO > PERDA_MAX_REAIS:
+                        self.stop_loss_calc_estorno = elem + PERDA_MAX_REAIS/FATOR_ATIVO
+                    else:
+                        self.stop_loss_calc_estorno = self.stop_loss_ajustado
+                        
                     self.aux_take_profit = self.stop_loss_base - elem
                     self.take_profit = elem - FATOR_LUCRO * self.aux_take_profit
                     
@@ -882,6 +903,18 @@ class BackTest(object):
                         self.cont_verdes = 0
                         self.cont_vermelhas = 0
                         
+                        # self.estorno_stop_ganho é utilizada nos casos
+                        # em que o trailing stop faz com que se saia da
+                        # operação por stop, mas ainda com ganho.
+                        if self.stop_loss_calc_estorno < self.stop_loss:
+                            self.estorno_stop_ganho = self.preco_entrada \
+                                - self.stop_loss_calc_estorno \
+                                - (self.preco_entrada - self.stop_loss)
+                        if self.estorno_stop_ganho >= 0:
+                            self.saldo += self.estorno_stop_ganho*FATOR_ATIVO
+                        else:
+                            self.saldo += PERDA_MAX_REAIS + (-self.estorno_stop_ganho*FATOR_ATIVO)
+                        
                         self.d_params_annotation['texto'].append('S C, SL ' + str(self.stop_loss))
                         self.d_params_annotation['y_annot'].append(self.stop_loss)
                         self.d_params_annotation['ytext_annot'].append(self.stop_loss-15)
@@ -891,9 +924,14 @@ class BackTest(object):
                         #----- Debug print -----
                         #-----------------------
                         print('Saída de compra a ' + str(self.stop_loss) + ', stop loss.')
+                        print('Estorno de stop: ' + str(self.estorno_stop_ganho*FATOR_ATIVO))
                         print('Hora da saída: ' + vela[INDICE_TH])
                         print('Saldo após saída: ' + str(self.saldo))
                         print('===========================================')
+                        
+                        # Reseta variáveis de estorno de trailing stop.
+                        self.stop_loss_calc_estorno = 0.0
+                        self.estorno_stop_ganho = 0.0
                         
                         break
                     
@@ -932,6 +970,19 @@ class BackTest(object):
                         self.cont_verdes = 0
                         self.cont_vermelhas = 0
                         
+                        # self.estorno_stop_ganho é utilizada nos casos
+                        # em que o trailing stop faz com que se saia da
+                        # operação por stop, mas ainda com ganho.
+                        if self.stop_loss_calc_estorno >= self.stop_loss:
+                            self.estorno_stop_ganho = self.stop_loss_calc_estorno \
+                                - self.preco_entrada \
+                                - (self.stop_loss - self.preco_entrada)
+                                
+                        if self.estorno_stop_ganho >= 0:
+                            self.saldo += self.estorno_stop_ganho*FATOR_ATIVO
+                        else:
+                            self.saldo += PERDA_MAX_REAIS + (-self.estorno_stop_ganho*FATOR_ATIVO)
+                            
                         self.d_params_annotation['texto'].append('S V, SL ' + str(self.stop_loss))
                         self.d_params_annotation['y_annot'].append(self.stop_loss)
                         self.d_params_annotation['ytext_annot'].append(self.stop_loss-15)
@@ -941,9 +992,14 @@ class BackTest(object):
                         #----- Debug print -----
                         #-----------------------
                         print('Saída de venda a ' + str(self.stop_loss) + ', stop loss.')
+                        print('Estorno de stop: ' + str(self.estorno_stop_ganho*FATOR_ATIVO))
                         print('Hora da saída: ' + vela[INDICE_TH])
                         print('Saldo após saída: ' + str(self.saldo))
                         print('===========================================')
+                        
+                        # Reseta variáveis de estorno de trailing stop.
+                        self.stop_loss_calc_estorno = 0.0
+                        self.estorno_stop_ganho = 0.0
                         
                         break
                     
