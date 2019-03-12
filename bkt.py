@@ -639,6 +639,7 @@ class BackTest(object):
             
             # Se o preço de entrada e de fechamento forem iguais,
             # considera-se o mesmo tipo da vela anterior.
+            # Se for a primeira vela, assume o valor 'g' arbitrariamente.
             else:
                 self.fifo_velas.append(self.fifo_velas[-1] if len(self.fifo_velas) > 0 else 'g')
                 # Passa as 3 primeiras velas sem operar.
