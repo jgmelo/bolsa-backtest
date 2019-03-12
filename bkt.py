@@ -24,7 +24,7 @@ INDICE_SL = 14
 
 # Fator que multiplicará o stop loss para definir o take profit.
 #> Implementar o fornecimento desse fator como argumento.
-FATOR_LUCRO = 0.5
+FATOR_LUCRO = 1.5
 
 # Número de barras a ser tolerado antes de cancelar o setup Single Bar.
 TOLERANCIA_POS_SBAR = 2
@@ -41,7 +41,7 @@ PERDA_MAX_REAIS = 100
 
 # Fator que multiplicará os pontos ganhos ou perdidos, dependendo do ativo
 # alvo do backtest.
-FATOR_ATIVO = 0.2
+FATOR_ATIVO = 1
 
 # Padrão de uso da classe:
 # 1. Inicializa objeto BackTest();
@@ -640,7 +640,7 @@ class BackTest(object):
             # Se o preço de entrada e de fechamento forem iguais,
             # considera-se o mesmo tipo da vela anterior.
             else:
-                self.fifo_velas.append(self.fifo_velas[-1])
+                self.fifo_velas.append(self.fifo_velas[-1] if len(self.fifo_velas) > 0 else 'g')
                 # Passa as 3 primeiras velas sem operar.
                 if len(self.fifo_velas) <= 4:
                      # Atualiza fechamento da útlima vela aqui, pois
